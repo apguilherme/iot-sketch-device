@@ -9,10 +9,11 @@
 #define LED LED_BUILTIN
 #define POT A0
 #define BUZ 16 // D0 pin
+#define REL 1 // D1 pin
 
 String deviceId = ""; // get it from frontend devices table
 String devicePwd = "***"; // get it from frontend devices table
-String webhookEndpoint = "<YOUR WIFI IPv4 PREFERENCIAL ADDRESS>:3000/api/devices/devicecredentials";
+String webhookEndpoint = "http://<YOUR WIFI IPv4 PREFERENCIAL ADDRESS>:3000/api/devices/devicecredentials";
 const char* mqttServer = "<YOUR WIFI IPv4 PREFERENCIAL ADDRESS>"; // example: 192.168.15.89
 const char* ssid = ""; // your wifi name. It does not connect to 5Ghz, must be 2.4Ghz
 const char* password = "***"; // your wifi password
@@ -40,8 +41,10 @@ void setup() {
   pinMode(LED, OUTPUT);
   pinMode(POT, INPUT);
   pinMode(BUZ, OUTPUT);
+  pinMode(REL, OUTPUT);
   digitalWrite(LED, HIGH);
   digitalWrite(BUZ, LOW);
+  digitalWrite(REL, HIGH);
   delay(5000);
   int count = 0;
   Serial.print(">>> Starting wifi connection: ");
@@ -168,7 +171,13 @@ void publishBroker() {
     payload = "";
     
     // RELE
-
+    topic = buildTopic(3);
+    payloadJson["value"] = digitalRead(REL) == 1 ? 0 : 1;
+    serializeJson(payloadJson, payload);
+    pubsubClient.publish(topic.c_str(), payload.c_str());
+    printDataSent(topic, payload);
+    payload = "";
+    
   }
 }
 
@@ -216,6 +225,6 @@ void processIncomingData(String topic, String incoming) {
   }
   // RELE
   else if (variable == "rele") {
-    Serial.println("VAR RELE");
+    digitalWrite(REL, value == 1 ? 0 : 1);
   }
 }
